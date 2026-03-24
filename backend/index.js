@@ -38,6 +38,8 @@ const getLEDStatus =async(req, res)=>{
     //     res.status(500).json({message: `Server Error: ${error.message}`});
     // }
     console.log("REQ BODY:", req.body);
+    console.time("toggle");
+    console.timeLog("toggle", "Request received");
     try {
         const { led } = req.body;
 
@@ -49,13 +51,14 @@ const getLEDStatus =async(req, res)=>{
         currentStatus.message = led ? "Turned On" : "Turned Off";
         console.log("App: ", currentStatus);
 
-        await LEDStatus.create(currentStatus);
+        // await LEDStatus.create(currentStatus);
 
         if(espClient && espClient.readyState === WebSocket.OPEN){
             espClient.send(JSON.stringify({
                 type: "command",
                 led: currentStatus.led
             }));
+            await LEDStatus.create(currentStatus);
         }
         else{
             console.log("ESP8266 is not connected");
@@ -69,6 +72,7 @@ const getLEDStatus =async(req, res)=>{
     } catch (error) {
         res.status(500).json({message: error.message});
     }
+    console.timeEnd("toggle"); 
 };
 
 app.post('/toggle', getLEDStatus);
@@ -79,7 +83,15 @@ console.log("Websocket server running");
 let espClient = null;
 let clients = new Set();
 
+// function heartbeat(){
+//     this.isAlive = true;
+// }
+
 wss.on('connection', (ws, req) => {
+    // ws.isAlive = true;
+
+    // ws.on("pong", heartbeat);
+
     console.log("New WebSocket Connected");
 
     ws.on('message', (msg) =>{
@@ -186,6 +198,36 @@ wss.on('connection', (ws, req) => {
         console.log("Websocket Error: ",e.message);
     });
 });
+
+
+// const interval = setInterval(()=>{
+//     wss.clients.forEach((ws)=>{
+//         if(ws.isAlive === false){
+//             console.log("Client dead, terminating..");
+//             ws.terminate();
+//             if(ws ===  espClient){
+//                 espClient = null;
+
+//                 broadCastToFlutter({
+//                     type:"esp_status",
+//                     led: false,
+//                     message: "ESP8266 Disconnected"
+//                 });
+
+//                 currentStatus.led = false;
+//                 currentStatus.message = "Turnde Off";
+
+//                 broadCastToFlutter({
+//                     type: "update",
+//                     ...currentStatus
+//                 });
+//             }
+//             return;
+//         }
+//         ws.isAlive = false;
+//         ws.ping();
+//     });
+// }, 5000);
 
 function broadCastToFlutter(data){
     clients.forEach(client =>{

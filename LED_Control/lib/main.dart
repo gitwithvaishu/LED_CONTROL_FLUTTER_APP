@@ -36,8 +36,8 @@ class _LedTogglePageState extends State<LedTogglePage> {
   late WebSocketChannel channel;
 
 
-  final String baseUrl = "http://192.168.31.5:3000";
-  final String wsUrl = "ws://192.168.31.5:3000";
+  final String baseUrl = "https://led-control-flutter-app.onrender.com";
+  final String wsUrl = "ws://led-control-flutter-app.onrender.com";
 
   @override
   void initState() {
